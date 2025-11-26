@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard Relevamiento Alfabetización 2024</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #f5f5f5; color: #222; }
+    header { background: #c85a1f; color: #fff; padding: 1.5rem 2rem; }
+    header h1 { margin: 0 0 .25rem 0; font-size: 1.8rem; }
+    header p { margin: 0; max-width: 800px; }
+
+    .nav { display: flex; gap: .75rem; padding: .75rem 2rem; background: #fff; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 10; }
+    .nav button {
+      border: none;
+      padding: .5rem 1rem;
+      border-radius: 999px;
+      cursor: pointer;
+      background: #eee;
+      font-weight: 600;
+    }
+    .nav button.active { background: #c85a1f; color: #fff; }
+
+    main { padding: 1.5rem 2rem 2.5rem; max-width: 1200px; margin: 0 auto; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .kpi {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,.06);
+    }
+    .kpi-label { font-size: .8rem; text-transform: uppercase; color: #777; margin-bottom: .25rem; }
+    .kpi-value { font-size: 1.4rem; font-weight: 700; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: minmax(0,2fr) minmax(0,1.3fr);
+      gap: 1.5rem;
+      align-items: stretch;
+    }
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: #fff;
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,.06);
+      height: 100%;
+    }
+    .card h2, .card h3 { margin-top: 0; font-size: 1.1rem; }
+
+    .text-small { font-size: .9rem; color: #444; line-height: 1.4; }
+
+    .select-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .select-row label { font-weight: 600; font-size: .9rem; }
+    select {
+      padding: .35rem .5rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+
+    .nivel-panel { display: none; margin-top: .5rem; }
+    .nivel-panel.active { display: block; }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: .15rem .5rem;
+      border-radius: 999px;
+      font-size: .75rem;
+      font-weight: 600;
+      background: #ffe5cf;
+      color: #7b3a10;
+      margin-right: .5rem;
+    }
+
+    .conclusiones-list {
+      padding-left: 1.1rem;
+      margin-top: .5rem;
+      font-size: .9rem;
+    }
+
+    .semaforo {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .semaforo-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,.06);
+      border-left: 7px solid transparent;
+    }
+    .semaforo-card.nivel1 { border-color: #e53935; }
+    .semaforo-card.nivel2 { border-color: #fb8c00; }
+    .semaforo-card.nivel3 { border-color: #43a047; }
+    .semaforo-card h4 { margin: 0 0 .4rem 0; font-size: 1rem; }
+    .semaforo-card p { margin: 0; font-size: .9rem; }
+
+    footer { text-align: center; padding: 1rem; font-size: .8rem; color: #777; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Dashboard Relevamiento de Alfabetización 2024</h1>
+    <p>
+      Visualización interactiva de los principales resultados del relevamiento a 90 docentes
+      de 19 jurisdicciones de la Argentina, desde nivel inicial hasta superior.
+    </p>
+  </header>
+
+  <nav class="nav">
+    <button data-section="resumen" class="active">Resumen general</button>
+    <button data-section="exploracion">Exploración de datos</button>
+    <button data-section="conclusiones">Conclusiones y desafíos</button>
+  </nav>
+
+  <main>
+    <!-- RESUMEN GENERAL -->
+    <section id="resumen" class="section active">
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">Docentes encuestados</div>
+          <div class="kpi-value">90</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Jurisdicciones</div>
+          <div class="kpi-value">19</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Alumnos alcanzados</div>
+          <div class="kpi-value">6371</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Gestión de las escuelas</div>
+          <div class="kpi-value">67,8% pública / 35% privada</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2>Métodos de alfabetización en el inicio</h2>
+          <p class="text-small">
+            La mayoría de los docentes de nivel inicial y primer ciclo declara utilizar un método
+            estructurado de enseñanza de la lectura y la escritura, aunque también persiste el uso
+            del enfoque global.
+          </p>
+          <canvas id="chartMetodoTipoResumen" height="200"></canvas>
+        </div>
+        <div class="card">
+          <h2>Capacitación en el Plan Nacional de Alfabetización</h2>
+          <p class="text-small">
+            La capacitación formal es baja en todos los niveles: en inicial y 1er ciclo solo
+            el 16,7% declara haberla recibido, y en 2º ciclo y secundaria apenas el 8%.
+          </p>
+          <canvas id="chartCapacitacionResumen" height="200"></canvas>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1.5rem;">
+        <h2>Lectura rápida de hallazgos</h2>
+        <span class="badge">Panorama general</span>
+        <p class="text-small">
+          El relevamiento muestra una fuerte preocupación docente por la alfabetización: se
+          reconoce la necesidad de métodos explícitos y estructurados en los primeros años,
+          la comprensión lectora aparece como problemática transversal en 2º ciclo y secundaria,
+          y en el nivel superior persisten dificultades para comprender consignas, aplicar
+          técnicas de estudio y producir textos coherentes.
+        </p>
+      </div>
+    </section>
+
+    <!-- EXPLORACIÓN DE DATOS -->
+    <section id="exploracion" class="section">
+      <div class="card">
+        <h2>Exploración de datos por nivel educativo</h2>
+        <div class="select-row">
+          <label for="nivelSelect">Seleccionar nivel:</label>
+          <select id="nivelSelect">
+            <option value="inicial">Nivel Inicial y 1er ciclo</option>
+            <option value="segundo">2º ciclo y Secundaria</option>
+            <option value="superior">Nivel Superior</option>
+          </select>
+        </div>
+
+        <!-- PANEL INICIAL -->
+        <div id="panelInicial" class="nivel-panel active">
+          <div class="chart-grid">
+            <div class="card">
+              <h3>Edad esperada para aprender a leer y escribir</h3>
+              <canvas id="chartEdadInicial" height="220"></canvas>
+            </div>
+            <div class="card">
+              <h3>Métodos y uso de materiales</h3>
+              <canvas id="chartMetodoMaterialInicial" height="220"></canvas>
+            </div>
+            <div class="card">
+              <h3>Capacitación en el Plan Nacional de Alfabetización</h3>
+              <canvas id="chartCapacitacionInicial" height="220"></canvas>
+            </div>
+          </div>
+          <p class="text-small">
+            Aunque el 91,4% declara utilizar un método específico y el 71,4% se identifica con el
+            enfoque estructurado, el 60% no sigue una secuencia establecida de letras y la
+            capacitación en el nuevo plan sigue siendo muy limitada.
+          </p>
+        </div>
+
+        <!-- PANEL 2º CICLO Y SECUNDARIA -->
+        <div id="panelSegundo" class="nivel-panel">
+          <div class="chart-grid">
+            <div class="card">
+              <h3>Capacitación y materiales para comprensión lectora</h3>
+              <canvas id="chartCapacitacionMaterialSegundo" height="220"></canvas>
+            </div>
+            <div class="card">
+              <h3>Frecuencia de estrategias de comprensión lectora</h3>
+              <canvas id="chartEstrategiasSegundo" height="220"></canvas>
+            </div>
+            <div class="card">
+              <h3>Satisfacción y apertura a nuevas estrategias</h3>
+              <canvas id="chartSatisfaccionSegundo" height="220"></canvas>
+            </div>
+          </div>
+          <p class="text-small">
+            La mayoría incluye la comprensión lectora en el currículo (96%) y percibe que
+            la decodificación y la comprensión son una problemática de su área, pero casi
+            dos tercios no utilizan programas o cuadernillos específicos y piden más recursos
+            y formación.
+          </p>
+        </div>
+
+        <!-- PANEL NIVEL SUPERIOR -->
+        <div id="panelSuperior" class="nivel-panel">
+          <div class="chart-grid">
+            <div class="card">
+              <h3>Comprensión de consignas</h3>
+              <canvas id="chartConsignasSuperior" height="220"></canvas>
+            </div>
+            <div class="card">
+              <h3>Técnicas de estudio</h3>
+              <canvas id="chartTecnicasSuperior" height="220"></canvas>
+            </div>
+            <div class="card">
+              <h3>Escritura e interpretación autónoma</h3>
+              <canvas id="chartEscrituraInterpretacionSuperior" height="220"></canvas>
+            </div>
+          </div>
+          <p class="text-small">
+            En el nivel superior, muchos estudiantes llegan sin consolidar habilidades de
+            comprensión de consignas, técnicas de estudio y producción escrita, lo que
+            evidencia un problema que se arrastra a lo largo de toda la trayectoria escolar.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONCLUSIONES -->
+    <section id="conclusiones" class="section">
+      <div class="card">
+        <h2>Síntesis de conclusiones</h2>
+        <p class="text-small">
+          Los datos refuerzan la necesidad de abordar la alfabetización como un proceso
+          continuo e integral. La baja capacitación en el Plan Nacional de Alfabetización,
+          la diversidad de métodos sin lineamientos claros y las dificultades persistentes en
+          comprensión lectora y escritura muestran que el sistema requiere intervenciones
+          coherentes desde el inicio de la escolaridad hasta el nivel superior.
+        </p>
+        <ul class="conclusiones-list">
+          <li>Definir y socializar lineamientos claros y basados en evidencia para la enseñanza inicial de la lectura y la escritura.</li>
+          <li>Garantizar ofertas de capacitación sostenida para docentes de todos los niveles, con foco en comprensión lectora.</li>
+          <li>Desarrollar y difundir materiales y secuencias didácticas que articulen métodos estructurados con contextos reales.</li>
+          <li>Fortalecer la enseñanza de técnicas de estudio y producción escrita en secundaria y superior para cerrar la brecha acumulada.</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-top:1.5rem;">
+        <h2>Preguntas para el trabajo en ateneos y equipos docentes</h2>
+        <ul class="conclusiones-list">
+          <li>¿Cómo acompañar a los docentes que dicen usar “método estructurado” para que lo apliquen con secuencias claras y consistentes?</li>
+          <li>¿Qué prácticas concretas de comprensión lectora podemos incorporar este año en 2º ciclo y secundaria, con los recursos disponibles?</li>
+          <li>¿Qué articulaciones podemos construir con el nivel superior para mejorar la comprensión de consignas y las técnicas de estudio?</li>
+          <li>¿Cómo priorizar la formación docente en contextos vulnerables donde la escuela es el principal agente alfabetizador?</li>
+        </ul>
+      </div>
+
+      <div class="semaforo">
+        <div class="semaforo-card nivel1">
+          <h4>Prioridad alta: Inicial y 1er ciclo</h4>
+          <p class="text-small">
+            Revisar secuencias de enseñanza, asegurar el uso consistente de métodos
+            estructurados basados en evidencia y ampliar la capacitación en el Plan Nacional
+            de Alfabetización.
+          </p>
+        </div>
+        <div class="semaforo-card nivel2">
+          <h4>Prioridad media: 2º ciclo y Secundaria</h4>
+          <p class="text-small">
+            Integrar la comprensión lectora en todas las áreas, generar materiales propios
+            y fortalecer proyectos como itinerarios lectores y escritura a través del currículo.
+          </p>
+        </div>
+        <div class="semaforo-card nivel3">
+          <h4>Prioridad sostenida: Nivel Superior</h4>
+          <p class="text-small">
+            Trabajar comprensión de consignas, técnicas de estudio y escritura académica
+            como parte explícita de los espacios curriculares, no solo como requisito implícito.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Dashboard pedagógico basado en el Informe de Relevamiento de Alfabetización 2024.
+  </footer>
+
+  <script>
+    // Navegación de secciones principales
+    const navButtons = document.querySelectorAll('.nav button');
+    const sections = document.querySelectorAll('.section');
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        navButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const target = btn.getAttribute('data-section');
+        sections.forEach(sec => {
+          sec.classList.toggle('active', sec.id === target);
+        });
+      });
+    });
+
+    // Filtro por nivel en exploración
+    const nivelSelect = document.getElementById('nivelSelect');
+    const panelInicial = document.getElementById('panelInicial');
+    const panelSegundo = document.getElementById('panelSegundo');
+    const panelSuperior = document.getElementById('panelSuperior');
+
+    function actualizarPanelNivel() {
+      const v = nivelSelect.value;
+      panelInicial.classList.toggle('active', v === 'inicial');
+      panelSegundo.classList.toggle('active', v === 'segundo');
+      panelSuperior.classList.toggle('active', v === 'superior');
+    }
+    nivelSelect.addEventListener('change', actualizarPanelNivel);
+
+    // Inicializar gráficos
+    document.addEventListener('DOMContentLoaded', () => {
+      // Resumen - método tipo
+      new Chart(document.getElementById('chartMetodoTipoResumen'), {
+        type: 'bar',
+        data: {
+          labels: ['Método estructurado', 'Método global'],
+          datasets: [{
+            label: '% de docentes que declaran usar el método',
+            data: [71.4, 37.1],
+            backgroundColor: ['#c85a1f', '#ffb74d']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+
+      // Resumen - capacitación por nivel
+      new Chart(document.getElementById('chartCapacitacionResumen'), {
+        type: 'bar',
+        data: {
+          labels: ['Inicial y 1er ciclo', '2º ciclo y Secundaria'],
+          datasets: [
+            {
+              label: '% con capacitación',
+              data: [16.7, 8],
+              backgroundColor: '#43a047'
+            },
+            {
+              label: '% sin capacitación',
+              data: [83.3, 92],
+              backgroundColor: '#e53935'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, max: 100 } },
+          plugins: {
+            tooltip: { mode: 'index', intersect: false },
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+
+      // Panel Inicial - edad
+      new Chart(document.getElementById('chartEdadInicial'), {
+        type: 'pie',
+        data: {
+          labels: ['5 años', '6 años', '7 años', '8 años'],
+          datasets: [{
+            data: [27.1, 50, 21.6, 2.9],
+            backgroundColor: ['#ffb74d', '#c85a1f', '#ffe082', '#ffcc80']
+          }]
+        },
+        options: { responsive: true }
+      });
+
+      // Panel Inicial - métodos y materiales
+      new Chart(document.getElementById('chartMetodoMaterialInicial'), {
+        type: 'bar',
+        data: {
+          labels: ['Implementa método específico', 'No implementa', 'Usa cuadernillos', 'No usa cuadernillos'],
+          datasets: [{
+            label: '% de docentes',
+            data: [91.4, 8.6, 28.6, 71.4],
+            backgroundColor: ['#43a047', '#e53935', '#64b5f6', '#90a4ae']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+
+      // Panel Inicial - capacitación
+      new Chart(document.getElementById('chartCapacitacionInicial'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Recibió capacitación', 'No recibió'],
+          datasets: [{
+            data: [16.7, 83.3],
+            backgroundColor: ['#43a047', '#e53935']
+          }]
+        },
+        options: { responsive: true }
+      });
+
+      // Panel 2º ciclo - capacitación y materiales
+      new Chart(document.getElementById('chartCapacitacionMaterialSegundo'), {
+        type: 'bar',
+        data: {
+          labels: ['Capacitación en Plan (Sí)', 'Capacitación (No)', 'Usa materiales comprensión', 'No usa materiales'],
+          datasets: [{
+            label: '% de docentes',
+            data: [8, 92, 37.3, 64],
+            backgroundColor: ['#43a047', '#e53935', '#64b5f6', '#90a4ae']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+
+      // Panel 2º ciclo - estrategias
+      new Chart(document.getElementById('chartEstrategiasSegundo'), {
+        type: 'bar',
+        data: {
+          labels: ['Siempre', 'Frecuentemente', 'A veces'],
+          datasets: [{
+            label: '% de docentes',
+            data: [22.7, 45.3, 30],
+            backgroundColor: ['#43a047', '#fb8c00', '#ffb74d']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+
+      // Panel 2º ciclo - satisfacción y apertura
+      new Chart(document.getElementById('chartSatisfaccionSegundo'), {
+        type: 'bar',
+        data: {
+          labels: ['Satisfecho con enseñanza comprensión (Sí)', 'No satisfecho',
+                   'Muy probable incluir nuevas estrategias', 'Otras respuestas'],
+          datasets: [{
+            label: '% de docentes',
+            data: [60, 40, 73.3, 26.7],
+            backgroundColor: ['#43a047', '#e53935', '#c85a1f', '#90a4ae']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+
+      // Panel Superior - consignas
+      new Chart(document.getElementById('chartConsignasSuperior'), {
+        type: 'pie',
+        data: {
+          labels: ['A veces tienen dificultades', 'Casi siempre comprenden', 'Mucha dificultad', 'Siempre comprenden'],
+          datasets: [{
+            data: [58.2, 21.8, 18.2, 2],
+            backgroundColor: ['#ffb74d', '#43a047', '#e53935', '#90a4ae']
+          }]
+        },
+        options: { responsive: true }
+      });
+
+      // Panel Superior - técnicas de estudio
+      new Chart(document.getElementById('chartTecnicasSuperior'), {
+        type: 'bar',
+        data: {
+          labels: ['Poseen habilidades', 'No poseen habilidades'],
+          datasets: [{
+            label: '% de docentes',
+            data: [25.2, 64.8],
+            backgroundColor: ['#43a047', '#e53935']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+
+      // Panel Superior - escritura e interpretación
+      new Chart(document.getElementById('chartEscrituraInterpretacionSuperior'), {
+        type: 'bar',
+        data: {
+          labels: ['Escritura: mucha dificultad', 'Escritura: a veces coherente', 'Escritura: generalmente coherente',
+                   'Interpretación: algunos estudiantes', 'Interpretación: la mayoría'],
+          datasets: [{
+            label: '% de docentes',
+            data: [34.5, 40, 20, 62, 34.5],
+            backgroundColor: ['#e53935', '#ffb74d', '#43a047', '#64b5f6', '#90a4ae']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
